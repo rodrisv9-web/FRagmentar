@@ -1,0 +1,1249 @@
+<?php
+/**
+ * Plantilla para el nuevo dashboard profesional.
+ * Versión con CSS puro y JavaScript para interactividad completa.
+ */
+if (!defined('ABSPATH')) {
+    exit; // Salir si se accede directamente.
+}
+?>
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Dashboard de Mascotas</title>
+    <script src="https://unpkg.com/@phosphor-icons/web"></script>
+    <style>
+        /* --- Reseteo Básico y Fuentes --- */
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap');
+
+        :root {
+            --primary-color: #6B46C1;
+            --light-purple: #F3E8FF;
+            --light-green: #F0FFF4;
+            --green-text: #276749;
+            --gray-50: #F9FAFB;
+            --gray-200: #E5E7EB;
+            --gray-300: #D1D5DB;
+            --gray-400: #9CA3AF;
+            --gray-500: #6B7280;
+            --gray-600: #4B5563;
+            --gray-800: #1F2937;
+            --gray-900: #111827;
+            --white: #FFFFFF;
+            --red: #EF4444;
+            --blue-500: #3B82F6;
+            --red-500: #EF4444;
+            --green-500: #10B981;
+            --yellow-500: #F59E0B;
+            --shadow-sm: 0 1px 2px 0 rgb(0 0 0 / 0.05);
+            --shadow-lg: 0 10px 15px -3px rgb(0 0 0 / 0.1), 0 4px 6px -4px rgb(0 0 0 / 0.1);
+            --border-radius-xl: 0.75rem;
+            --border-radius-2xl: 1rem;
+            --border-radius-3xl: 1.5rem;
+            --border-radius-4xl: 2rem;
+        }
+
+        body {
+            margin: 0;
+            font-family: 'Inter', sans-serif;
+            background-color: var(--gray-50);
+            color: var(--gray-800);
+            -webkit-tap-highlight-color: transparent;
+        }
+
+        *, *::before, *::after {
+            box-sizing: border-box;
+        }
+        
+        /* --- Contenedor Principal --- */
+        .dashboard-container {
+            max-width: 512px;
+            margin: 0 auto;
+            padding-bottom: 1.5rem;
+        }
+
+        /* --- Pantallas y Transiciones --- */
+        .screen {
+            display: none;
+            animation: fadeIn 0.3s ease-out;
+        }
+        .screen.active {
+            display: block;
+        }
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        /* --- Encabezado --- */
+        .dashboard-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 1.5rem 1.5rem 1rem;
+        }
+        .header-title {
+            font-size: 1.875rem;
+            font-weight: 700;
+            color: var(--gray-900);
+        }
+        .header-title .user-name {
+            color: var(--primary-color);
+        }
+        .header-actions {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+        .header-button {
+            width: 2.5rem;
+            height: 2.5rem;
+            background-color: var(--gray-200);
+            border-radius: 9999px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border: none;
+            cursor: pointer;
+            position: relative;
+        }
+        .header-button i {
+            font-size: 1.25rem;
+            color: var(--gray-600);
+        }
+        #notification-badge {
+            position: absolute;
+            top: 0.25rem;
+            right: 0.25rem;
+            width: 0.5rem;
+            height: 0.5rem;
+            background-color: var(--red);
+            border-radius: 9999px;
+            display: none; /* Se muestra con JS */
+        }
+        #notification-badge.visible {
+            display: block;
+        }
+
+        /* --- Selector de Mascota --- */
+        .pet-selector-wrapper {
+            padding: 0 1.5rem;
+            margin-bottom: 1.5rem;
+        }
+        .pet-selector-button {
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            padding: 0.75rem;
+            background-color: var(--white);
+            border-radius: var(--border-radius-2xl);
+            box-shadow: var(--shadow-sm);
+            width: 100%;
+            border: none;
+            cursor: pointer;
+            text-align: left;
+        }
+        .pet-avatar {
+            width: 3rem;
+            height: 3rem;
+            border-radius: var(--border-radius-xl);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.5rem;
+            background-color: var(--light-purple);
+            color: var(--primary-color);
+            flex-shrink: 0;
+        }
+        .pet-info {
+            flex-grow: 1;
+        }
+        .pet-name-display {
+            font-size: 1.125rem;
+            font-weight: 700;
+            color: var(--gray-900);
+        }
+        .pet-species-display {
+            font-size: 0.875rem;
+            color: var(--gray-500);
+        }
+        .pet-selector-caret i {
+            font-size: 1.5rem;
+            color: var(--gray-400);
+        }
+
+        /* --- Tarjetas de Métricas y Acceso Rápido --- */
+        .card-wrapper {
+            padding: 0 1.5rem;
+            margin-bottom: 1.5rem;
+        }
+        .card {
+            background-color: var(--white);
+            padding: 1.25rem;
+            border-radius: var(--border-radius-3xl);
+            box-shadow: var(--shadow-sm);
+        }
+        .metrics-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 1rem;
+        }
+        .metric-item {
+            background-color: var(--white);
+            padding: 1rem;
+            border-radius: var(--border-radius-3xl);
+            box-shadow: var(--shadow-sm);
+        }
+        .metric-item i {
+            font-size: 1.5rem;
+            margin-bottom: 0.5rem;
+            display: block;
+        }
+        .metric-item .label {
+            font-size: 0.875rem;
+            color: var(--gray-500);
+        }
+        .metric-item .value {
+            font-size: 1rem;
+            font-weight: 700;
+        }
+        .metric-item .ph-calendar-check { color: var(--blue-500); }
+        .metric-item .ph-heartbeat { color: var(--red-500); }
+        .metric-item .ph-syringe { color: var(--green-500); }
+        .metric-item .ph-scaleweight { color: var(--yellow-500); }
+
+        .quick-access-wrapper {
+            padding: 0 1.5rem;
+        }
+        .quick-access-title {
+            font-size: 1.25rem;
+            font-weight: 700;
+            color: var(--gray-800);
+            margin-bottom: 1rem;
+        }
+        .quick-access-links {
+            display: flex;
+            flex-direction: column;
+            gap: 1rem;
+        }
+        .access-link {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+            padding: 1.25rem;
+            background-color: var(--white);
+            border-radius: var(--border-radius-3xl);
+            box-shadow: var(--shadow-sm);
+            text-decoration: none;
+            cursor: pointer;
+        }
+        .access-link-icon {
+            width: 3rem;
+            height: 3rem;
+            border-radius: var(--border-radius-xl);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            flex-shrink: 0;
+        }
+        .access-link-icon i {
+            font-size: 1.5rem;
+        }
+        .access-link-icon.history {
+            background-color: var(--light-purple);
+            color: var(--primary-color);
+        }
+        .access-link-icon.add-entry {
+            background-color: var(--light-green);
+            color: var(--green-text);
+        }
+        .access-link-text .title {
+            font-weight: 700;
+            color: var(--gray-800);
+        }
+        .access-link-text .subtitle {
+            font-size: 0.875rem;
+            color: var(--gray-500);
+        }
+
+        /* --- Pantalla de Historial --- */
+        .history-header {
+            display: grid;
+            grid-template-columns: auto 1fr auto;
+            align-items: center;
+            padding: 1.5rem 1.5rem 1rem;
+        }
+        .back-button {
+            width: 2.5rem;
+            height: 2.5rem;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border: none;
+            background: none;
+            cursor: pointer;
+            margin-left: -0.5rem;
+        }
+        .back-button i {
+            font-size: 1.5rem;
+            color: var(--gray-600);
+        }
+        .history-title {
+            font-size: 1.25rem;
+            font-weight: 700;
+            color: var(--gray-900);
+            text-align: center;
+            white-space: nowrap;
+        }
+        .date-filter-wrapper {
+            position: relative;
+            justify-self: end;
+        }
+        #date-filter-toggle {
+            width: 2.5rem;
+            height: 2.5rem;
+            background-color: var(--white);
+            border: 1px solid var(--gray-200);
+            border-radius: 9999px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+        }
+        #date-filter-toggle i {
+            font-size: 1.25rem;
+            color: var(--gray-600);
+        }
+        #date-filter-popup {
+            position: absolute;
+            right: 0;
+            top: 3rem;
+            background-color: var(--white);
+            border-radius: var(--border-radius-2xl);
+            box-shadow: var(--shadow-lg);
+            padding: 1rem;
+            width: 256px;
+            z-index: 10;
+            display: none; /* Se muestra con JS */
+        }
+        #date-filter-popup.visible {
+            display: block;
+        }
+        .date-filter-inputs {
+            display: flex;
+            flex-direction: column;
+            gap: 0.5rem;
+        }
+        .date-filter-inputs label {
+            font-size: 0.75rem;
+            color: var(--gray-500);
+        }
+        .date-filter-inputs input[type="date"] {
+            width: 100%;
+            font-size: 0.875rem;
+            border: 1px solid var(--gray-300);
+            border-radius: 0.375rem;
+            padding: 0.25rem;
+        }
+        #clear-date-filter {
+            width: 100%;
+            text-align: center;
+            font-size: 0.75rem;
+            color: var(--red);
+            margin-top: 0.5rem;
+            background: none;
+            border: none;
+            cursor: pointer;
+        }
+
+        .filters-wrapper {
+            padding: 0 1.5rem 1rem;
+            overflow-x: auto;
+            -ms-overflow-style: none; /* IE and Edge */
+            scrollbar-width: none; /* Firefox */
+        }
+        .filters-wrapper::-webkit-scrollbar {
+            display: none; /* Chrome, Safari, Opera */
+        }
+        #filter-container {
+            display: flex;
+            gap: 0.5rem;
+        }
+        .filter-button {
+            padding: 0.5rem 1rem;
+            border-radius: 9999px;
+            font-weight: 500;
+            font-size: 0.875rem;
+            transition: all 0.2s;
+            white-space: nowrap;
+            border: 1px solid var(--gray-200);
+            background-color: var(--white);
+            color: var(--gray-800);
+            cursor: pointer;
+        }
+        .filter-button.active {
+            background-color: var(--primary-color);
+            color: var(--white);
+            border-color: var(--primary-color);
+            box-shadow: var(--shadow-sm);
+        }
+
+        .timeline-wrapper {
+            padding: 0 1.5rem;
+        }
+        .timeline {
+            position: relative;
+        }
+        .timeline-line {
+            position: absolute;
+            top: 0;
+            bottom: 0;
+            left: 0.5rem;
+            width: 2px;
+            background-color: var(--gray-300);
+            border-radius: 9999px;
+            margin-left: -1px;
+        }
+        .timeline-item {
+            position: relative;
+            margin-bottom: 1rem;
+            padding-left: 2rem;
+        }
+        .timeline-marker {
+            position: absolute;
+            left: 0;
+            top: 0.5rem;
+            width: 1rem;
+            height: 1rem;
+            border-radius: 9999px;
+            background-color: var(--primary-color);
+            border: 2px solid var(--white);
+        }
+        .timeline-card {
+            background-color: var(--white);
+            border-radius: var(--border-radius-2xl);
+            padding: 1rem;
+        }
+        .timeline-card .date {
+            font-size: 0.75rem;
+            color: var(--gray-500);
+            font-weight: 500;
+            margin-bottom: 0.25rem;
+        }
+        .timeline-card .title {
+            font-weight: 700;
+            color: var(--gray-800);
+            margin: 0;
+        }
+        .timeline-card .description {
+            font-size: 0.875rem;
+            color: var(--gray-600);
+            overflow: hidden;
+            text-overflow: ellipsis;
+            display: -webkit-box;
+            -webkit-line-clamp: 1;
+            -webkit-box-orient: vertical;
+            margin: 0.25rem 0 0;
+        }
+
+        #pagination-controls {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-top: 1.5rem;
+        }
+        .pagination-button {
+            padding: 0.25rem 0.75rem;
+            font-size: 0.875rem;
+            font-weight: 500;
+            background-color: var(--white);
+            border: 1px solid var(--gray-300);
+            border-radius: 0.5rem;
+            cursor: pointer;
+        }
+        .pagination-button:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+        .page-info {
+            font-size: 0.875rem;
+            color: var(--gray-600);
+        }
+        .no-records-message {
+            text-align: center;
+            color: var(--gray-500);
+            padding: 2rem;
+        }
+
+        /* --- Bottom Sheets --- */
+        .bottom-sheet-overlay {
+            position: fixed;
+            inset: 0;
+            background-color: rgba(0,0,0,0.4);
+            z-index: 40;
+            opacity: 0;
+            visibility: hidden;
+            transition: opacity 0.4s ease, visibility 0.4s ease;
+        }
+        .bottom-sheet-overlay.active {
+            opacity: 1;
+            visibility: visible;
+        }
+        .bottom-sheet {
+            position: fixed;
+            bottom: 0;
+            left: 0;
+            width: 100%;
+            background-color: var(--gray-50);
+            border-top-left-radius: var(--border-radius-4xl);
+            border-top-right-radius: var(--border-radius-4xl);
+            box-shadow: 0 -10px 25px -5px rgb(0 0 0 / 0.1);
+            z-index: 50;
+            padding: 1.5rem;
+            display: flex;
+            flex-direction: column;
+            max-height: 85vh;
+            transform: translateY(100%);
+            transition: transform 0.4s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+        }
+        .bottom-sheet.active {
+            transform: translateY(0);
+        }
+        .sheet-handle {
+            display: flex;
+            justify-content: center;
+            margin-bottom: 1rem;
+        }
+        .sheet-handle-bar {
+            width: 2.5rem;
+            height: 0.25rem;
+            border-radius: 9999px;
+            background-color: var(--gray-300);
+        }
+        .sheet-title {
+            text-align: center;
+            font-size: 1.5rem;
+            font-weight: 700;
+            margin-bottom: 1.5rem;
+        }
+        .sheet-content {
+            overflow-y: auto;
+            padding-bottom: 1rem;
+        }
+        /* No-scrollbar utility */
+        .no-scrollbar::-webkit-scrollbar { display: none; }
+        .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+
+        /* --- Estilos para Formularios y Listas en Bottom Sheets --- */
+        #pet-list {
+            list-style: none;
+            padding: 0;
+            margin: 0;
+            display: flex;
+            flex-direction: column;
+            gap: 0.75rem;
+        }
+        .pet-list-item {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+            padding: 0.75rem;
+            background-color: var(--white);
+            border-radius: var(--border-radius-2xl);
+            box-shadow: var(--shadow-sm);
+            cursor: pointer;
+        }
+        .pet-list-item .pet-avatar {
+            /* Usa los estilos de .pet-avatar */
+        }
+        .pet-list-item .pet-name {
+            font-weight: 700;
+            font-size: 1.125rem;
+            color: var(--gray-800);
+        }
+        
+        #add-pet-sheet .tab-buttons {
+            display: flex;
+            border-bottom: 1px solid var(--gray-200);
+            margin-bottom: 1.5rem;
+        }
+        #add-pet-sheet .tab-button {
+            flex: 1;
+            padding: 0.75rem;
+            font-weight: 700;
+            color: var(--gray-500);
+            border: none;
+            background: none;
+            cursor: pointer;
+            transition: color 0.3s, border-color 0.3s;
+            border-bottom: 2px solid transparent;
+        }
+        #add-pet-sheet .tab-button.active {
+            color: var(--primary-color);
+            border-bottom-color: var(--primary-color);
+        }
+        .tab-content {
+            display: none;
+        }
+        .tab-content.active {
+            display: block;
+        }
+        
+        form {
+            display: flex;
+            flex-direction: column;
+            gap: 1rem;
+        }
+        form label {
+            display: block;
+            font-size: 0.875rem;
+            font-weight: 500;
+            color: var(--gray-600);
+            margin-bottom: 0.25rem;
+        }
+        form input, form select, form textarea {
+            width: 100%;
+            padding: 0.75rem 1rem;
+            background-color: var(--white);
+            border: 1px solid var(--gray-300);
+            border-radius: var(--border-radius-xl);
+        }
+        form input:focus, form select:focus, form textarea:focus {
+            outline: 2px solid transparent;
+            outline-offset: 2px;
+            border-color: var(--primary-color);
+        }
+        form button[type="submit"] {
+            width: 100%;
+            background-color: var(--primary-color);
+            color: var(--white);
+            font-weight: 700;
+            padding: 0.875rem;
+            border-radius: var(--border-radius-xl);
+            border: none;
+            cursor: pointer;
+            transition: background-color 0.3s;
+        }
+        form button[type="submit"]:hover {
+            background-color: #5B21B6;
+        }
+        .share-code-info {
+            font-size: 0.75rem;
+            text-align: center;
+            color: var(--gray-500);
+        }
+        #share-code {
+            text-align: center;
+            letter-spacing: 0.1em;
+            font-family: monospace;
+            text-transform: uppercase;
+        }
+
+        #notifications-list {
+            list-style: none;
+            padding: 0;
+            margin: 0;
+            display: flex;
+            flex-direction: column;
+            gap: 0.75rem;
+        }
+        .notification-item {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+            padding: 0.75rem;
+            background-color: var(--white);
+            border-radius: var(--border-radius-2xl);
+            box-shadow: var(--shadow-sm);
+        }
+        .notification-icon {
+            width: 3rem;
+            height: 3rem;
+            border-radius: var(--border-radius-xl);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            flex-shrink: 0;
+            background-color: #EBF8FF;
+            color: #3B82F6;
+        }
+        .notification-icon i {
+            font-size: 1.5rem;
+        }
+        .notification-text .title {
+            font-weight: 700;
+            color: var(--gray-800);
+        }
+        .notification-text .subtitle {
+            font-size: 0.875rem;
+            color: var(--gray-600);
+        }
+        .no-notifications {
+            text-align: center;
+            color: var(--gray-500);
+            padding: 2rem;
+        }
+
+        #toast {
+            position: fixed;
+            bottom: -100px;
+            left: 50%;
+            transform: translateX(-50%);
+            z-index: 60;
+            background-color: var(--gray-800);
+            color: var(--white);
+            font-size: 0.875rem;
+            padding: 0.5rem 1rem;
+            border-radius: var(--border-radius-xl);
+            transition: all 0.3s ease-in-out;
+        }
+        #toast.show {
+            bottom: 20px;
+        }
+
+    </style>
+</head>
+<body>
+    <div class="dashboard-container">
+        <!-- El resto del HTML se mantiene igual -->
+        <main id="main-content">
+            <div id="resumen-screen" class="screen active">
+                <header class="dashboard-header">
+                     <h1 class="header-title">Hola, <span class="user-name" id="user-name">Usuario</span></h1>
+                     <div class="header-actions">
+                         <button id="notifications-button" class="header-button">
+                            <i class="ph ph-bell"></i>
+                            <span id="notification-badge"></span>
+                        </button>
+                         <button id="add-pet-button" class="header-button">
+                            <i class="ph ph-plus"></i>
+                        </button>
+                    </div>
+                </header>
+                
+                <div class="pet-selector-wrapper">
+                    <button id="pet-select-button" class="pet-selector-button">
+                        <div id="current-pet-avatar" class="pet-avatar">
+                            <i class="ph-bold ph-paw-print"></i>
+                        </div>
+                        <div class="pet-info">
+                            <span id="current-pet-name-btn" class="pet-name-display">Seleccionar Mascota</span>
+                            <p id="current-pet-species-btn" class="pet-species-display">Toca para cambiar</p>
+                        </div>
+                        <div class="pet-selector-caret"><i class="ph ph-caret-down"></i></div>
+                    </button>
+                </div>
+                
+                <div class="card-wrapper">
+                    <div class="card" style="display: flex; align-items: center; justify-content: space-between;">
+                         <div>
+                            <p style="font-weight: 700; color: var(--gray-800);">Bienestar General</p>
+                            <p style="font-size: 0.875rem; color: var(--gray-500);">Estado de la mascota</p>
+                        </div>
+                        <div style="text-align: right;">
+                             <p style="font-size: 1.125rem; font-weight: 700; color: var(--primary-color);">Excelente</p>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="card-wrapper">
+                    <div class="metrics-grid">
+                        <div class="metric-item">
+                            <i class="ph-fill ph-calendar-check"></i>
+                            <p class="label">Próxima Cita</p>
+                            <p class="value" id="next-appointment">--</p>
+                        </div>
+                        <div class="metric-item">
+                            <i class="ph-fill ph-heartbeat"></i>
+                            <p class="label">Última Visita</p>
+                            <p class="value" id="last-visit">--</p>
+                        </div>
+                         <div class="metric-item">
+                            <i class="ph-fill ph-syringe"></i>
+                            <p class="label">Vacunación</p>
+                            <p class="value" id="last-vaccine">--</p>
+                        </div>
+                        <div class="metric-item">
+                            <i class="ph-fill ph-scaleweight"></i>
+                            <p class="label">Peso Actual</p>
+                            <p class="value" id="current-weight">--</p>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="quick-access-wrapper">
+                    <h2 class="quick-access-title">Acceso Rápido</h2>
+                    <div class="quick-access-links">
+                        <a id="quick-access-card" class="access-link">
+                            <div class="access-link-icon history">
+                                 <i class="ph-bold ph-list-checks"></i>
+                            </div>
+                            <div class="access-link-text">
+                                <span class="title">Ver Historial Completo</span>
+                                <p class="subtitle">Revisa todas las entradas médicas</p>
+                            </div>
+                        </a>
+                        <a id="add-history-quick-access" class="access-link">
+                             <div class="access-link-icon add-entry">
+                                 <i class="ph-bold ph-plus-circle"></i>
+                            </div>
+                            <div class="access-link-text">
+                                <span class="title">Añadir Nueva Entrada</span>
+                                <p class="subtitle">Registra una nueva consulta o evento</p>
+                            </div>
+                        </a>
+                    </div>
+                </div>
+            </div>
+
+            <div id="historial-screen" class="screen">
+                <header class="history-header">
+                    <button id="back-to-resumen-button" class="back-button"><i class="ph ph-arrow-left"></i></button>
+                    <h1 class="history-title">Historial Médico</h1>
+                    <div class="date-filter-wrapper">
+                         <button id="date-filter-toggle">
+                            <i class="ph ph-calendar"></i>
+                        </button>
+                         <div id="date-filter-popup">
+                            <p style="font-size: 0.875rem; font-weight: 700; margin-bottom: 0.5rem;">Filtrar por fecha</p>
+                            <div class="date-filter-inputs">
+                                <div>
+                                    <label for="start-date">Desde</label>
+                                    <input type="date" id="start-date">
+                                </div>
+                                <div>
+                                    <label for="end-date">Hasta</label>
+                                    <input type="date" id="end-date">
+                                </div>
+                            </div>
+                            <button id="clear-date-filter">Limpiar filtro</button>
+                        </div>
+                    </div>
+                </header>
+                <div class="filters-wrapper">
+                    <div id="filter-container"></div>
+                </div>
+                <div class="timeline-wrapper">
+                    <div class="timeline">
+                        <div class="timeline-line"></div>
+                        <div id="timeline-container"></div>
+                    </div>
+                    <div id="pagination-controls" class="pagination-controls"></div>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <!-- Bottom Sheets -->
+    <div class="bottom-sheet-overlay" id="sheet-overlay"></div>
+    
+    <div class="bottom-sheet" id="pet-select-sheet">
+         <div class="sheet-handle"><div class="sheet-handle-bar"></div></div>
+        <h2 class="sheet-title">Selecciona una Mascota</h2>
+        <ul id="pet-list" class="sheet-content no-scrollbar"></ul>
+    </div>
+    
+    <div class="bottom-sheet" id="add-pet-sheet">
+        <div class="sheet-handle"><div class="sheet-handle-bar"></div></div>
+        <div class="sheet-content no-scrollbar">
+            <div class="tab-buttons">
+                <button id="tab-create-pet" class="tab-button active">Crear Nueva</button>
+                <button id="tab-add-by-code" class="tab-button">Usar Código</button>
+            </div>
+
+            <div id="content-create-pet" class="tab-content active">
+                <form id="add-pet-form">
+                     <div>
+                        <label for="pet-name">Nombre</label>
+                        <input type="text" id="pet-name" required>
+                    </div>
+                     <div>
+                        <label for="pet-species">Especie</label>
+                        <select id="pet-species" required>
+                            <option value="Perro">Perro</option>
+                            <option value="Gato">Gato</option>
+                            <option value="Pájaro">Pájaro</option>
+                            <option value="Otro">Otro</option>
+                        </select>
+                    </div>
+                    <button type="submit">Guardar Mascota</button>
+                </form>
+            </div>
+
+            <div id="content-add-by-code" class="tab-content">
+                 <form id="add-by-code-form">
+                    <div>
+                        <label for="share-code">Código para compartir</label>
+                        <input type="text" id="share-code" placeholder="Ingresa el código de la mascota" required>
+                    </div>
+                    <p class="share-code-info">Pide al dueño de la mascota que te comparta su código único.</p>
+                    <button type="submit">Añadir Mascota</button>
+                </form>
+            </div>
+        </div>
+    </div>
+
+     <div class="bottom-sheet" id="add-history-sheet">
+        <div class="sheet-handle"><div class="sheet-handle-bar"></div></div>
+        <div class="sheet-content no-scrollbar">
+            <h2 class="sheet-title">Añadir Nueva Entrada</h2>
+            <form id="add-history-form">
+                <div>
+                    <label for="history-title">Título</label>
+                    <input type="text" id="history-title" required>
+                </div>
+                <div>
+                    <label for="history-type">Tipo de Entrada</label>
+                    <select id="history-type" required>
+                        <option value="consultation">Consulta</option>
+                        <option value="vaccination">Vacuna</option>
+                        <option value="surgery">Cirugía</option>
+                        <option value="procedure">Otro</option>
+                    </select>
+                </div>
+                <div>
+                    <label for="history-description">Descripción</label>
+                    <textarea id="history-description" rows="3"></textarea>
+                </div>
+                <button type="submit">Guardar Entrada</button>
+            </form>
+        </div>
+    </div>
+    
+    <div class="bottom-sheet" id="notifications-sheet">
+        <div class="sheet-handle"><div class="sheet-handle-bar"></div></div>
+        <h2 class="sheet-title">Notificaciones</h2>
+        <ul id="notifications-list" class="sheet-content no-scrollbar"></ul>
+    </div>
+
+    <div id="toast"></div>
+    
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            const appData = {
+                pets: [
+                    { id: 1, name: 'Luna', species: 'Perro', icon: 'ph-dog', nextAppointment: '22 Oct, 10:00', lastVisit: '08 Sep, 2025', lastVaccine: 'Polivalente', weight: '25.6 kg' },
+                    { id: 2, name: 'Simba', species: 'Gato', icon: 'ph-cat', nextAppointment: '15 Nov, 12:30', lastVisit: '10 Jul, 2025', lastVaccine: 'Trivalente', weight: '5.2 kg' },
+                    { id: 3, name: 'Kiwi', species: 'Pájaro', icon: 'ph-bird', nextAppointment: 'Ninguna', lastVisit: '05 Ene, 2025', lastVaccine: 'N/A', weight: '85 g' },
+                ],
+                shareablePets: {
+                    "ROCKY123": { id: 4, name: 'Rocky', species: 'Perro', icon: 'ph-dog', nextAppointment: '30 Dic, 09:00', lastVisit: '15 Ago, 2025', lastVaccine: 'Rabia', weight: '30.1 kg' }
+                },
+                medicalHistory: {
+                    1: [
+                        { id: 1, date: '2025-09-08T10:15:00', type: 'consultation', title: 'Revisión por cojera', description: 'Dueño reporta cojera...', professional: 'Dr. Carlos Ruiz' }, 
+                        { id: 4, date: '2024-10-15T10:45:00', type: 'vaccination', title: 'Vacuna Polivalente Anual', description: 'Refuerzo anual.', professional: 'Dr. Carlos Ruiz' },
+                        { id: 6, date: '2024-08-20T11:00:00', type: 'consultation', title: 'Limpieza dental', description: 'Procedimiento de rutina.', professional: 'Dr. Carlos Ruiz' },
+                        { id: 7, date: '2024-05-10T09:30:00', type: 'procedure', title: 'Corte de uñas', description: 'Corte y limado.', professional: 'Estilista Canino' },
+                        { id: 8, date: '2023-10-15T10:45:00', type: 'vaccination', title: 'Vacuna Polivalente Anual', description: 'Refuerzo anual 2023.', professional: 'Dr. Carlos Ruiz' },
+                        { id: 9, date: '2023-09-01T12:00:00', type: 'consultation', title: 'Revisión por alergia', description: 'Se recetan antihistamínicos.', professional: 'Dr. Carlos Ruiz' },
+                    ],
+                    2: [{ id: 5, date: '2025-07-10T11:00:00', type: 'consultation', title: 'Revisión anual', description: 'Chequeo general.', professional: 'Dra. Isabel Soler' }],
+                    3: [],
+                    4: []
+                }
+            };
+
+            let selectedPetId = 1;
+            let activeFilter = 'all';
+            let activeScreen = 'resumen';
+            let currentPage = 1;
+            const itemsPerPage = 4;
+            let dateFilter = { start: null, end: null };
+
+            const speciesToIcon = { 'Perro': 'ph-dog', 'Gato': 'ph-cat', 'Pájaro': 'ph-bird', 'Otro': 'ph-paw-print' };
+            const historyFilters = { 'all': { label: 'Todo' }, 'consultation': { label: 'Consultas' }, 'vaccination': { label: 'Vacunas' }, 'surgery': { label: 'Cirugías' }, 'procedure': { label: 'Otros' } };
+
+            function navigateTo(screenName) {
+                document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+                document.getElementById(`${screenName}-screen`).classList.add('active');
+                activeScreen = screenName;
+                if (screenName === 'historial') {
+                    currentPage = 1;
+                    renderTimeline();
+                }
+            }
+
+            function showToast(message) {
+                const toast = document.getElementById('toast');
+                if(!toast) return;
+                clearTimeout(toast.timeoutId);
+                toast.textContent = message;
+                toast.classList.add('show');
+                toast.timeoutId = setTimeout(() => toast.classList.remove('show'), 3000);
+            }
+
+            function openSheet(sheetId) {
+                document.getElementById('sheet-overlay').classList.add('active');
+                document.getElementById(sheetId).classList.add('active');
+            }
+
+            function closeAllSheets() {
+                document.getElementById('sheet-overlay').classList.remove('active');
+                document.querySelectorAll('.bottom-sheet').forEach(s => s.classList.remove('active'));
+            }
+
+            function updateDashboard() {
+                const pet = appData.pets.find(p => p.id === selectedPetId);
+                if (!pet) return;
+                document.getElementById('current-pet-avatar').innerHTML = `<i class="ph-bold ${pet.icon}"></i>`;
+                document.getElementById('current-pet-name-btn').textContent = pet.name;
+                document.getElementById('current-pet-species-btn').textContent = pet.species;
+                document.getElementById('next-appointment').textContent = pet.nextAppointment;
+                document.getElementById('last-visit').textContent = pet.lastVisit;
+                document.getElementById('last-vaccine').textContent = pet.lastVaccine;
+                document.getElementById('current-weight').textContent = pet.weight;
+            }
+
+            function renderPetListInSheet() {
+                const list = document.getElementById('pet-list');
+                list.innerHTML = appData.pets.map(pet => `
+                    <li class="pet-list-item" data-id="${pet.id}">
+                        <div class="pet-avatar">
+                            <i class="ph-bold ${pet.icon}"></i>
+                        </div>
+                        <span class="pet-name">${pet.name}</span>
+                    </li>
+                `).join('');
+            }
+
+            function renderNotifications() {
+                const list = document.getElementById('notifications-list');
+                const badge = document.getElementById('notification-badge');
+                const upcomingAppointments = appData.pets.filter(pet => pet.nextAppointment && pet.nextAppointment !== 'Ninguna');
+                if (upcomingAppointments.length > 0) {
+                    badge.classList.add('visible');
+                    list.innerHTML = upcomingAppointments.map(pet => `
+                        <li class="notification-item">
+                            <div class="notification-icon">
+                                <i class="ph-bold ph-calendar-check"></i>
+                            </div>
+                            <div class="notification-text">
+                                <p class="title">${pet.name} tiene una cita</p>
+                                <p class="subtitle">${pet.nextAppointment}</p>
+                            </div>
+                        </li>
+                    `).join('');
+                } else {
+                    badge.classList.remove('visible');
+                    list.innerHTML = `<p class="no-notifications">No tienes notificaciones.</p>`;
+                }
+            }
+            
+            function renderTimeline() {
+                const container = document.getElementById('timeline-container');
+                const history = appData.medicalHistory[selectedPetId] || [];
+                
+                let filteredHistory = (activeFilter === 'all' ? history : history.filter(item => item.type === activeFilter));
+                if (dateFilter.start) {
+                    filteredHistory = filteredHistory.filter(item => new Date(item.date) >= new Date(dateFilter.start));
+                }
+                if (dateFilter.end) {
+                    const endDate = new Date(dateFilter.end);
+                    endDate.setHours(23, 59, 59, 999);
+                    filteredHistory = filteredHistory.filter(item => new Date(item.date) <= endDate);
+                }
+                
+                filteredHistory.sort((a, b) => new Date(b.date) - new Date(a.date));
+
+                const totalPages = Math.ceil(filteredHistory.length / itemsPerPage);
+                const startIndex = (currentPage - 1) * itemsPerPage;
+                const paginatedItems = filteredHistory.slice(startIndex, startIndex + itemsPerPage);
+
+                if (paginatedItems.length === 0) {
+                    container.innerHTML = `<p class="no-records-message">No hay registros para este filtro.</p>`;
+                    renderPaginationControls(0, 0);
+                    return;
+                }
+                
+                container.innerHTML = paginatedItems.map(item => {
+                    const itemDate = new Date(item.date).toLocaleDateString('es-ES', { month: 'short', day: 'numeric' });
+                    return `
+                    <div class="timeline-item" data-id="${item.id}">
+                        <div class="timeline-marker"></div>
+                        <div class="timeline-card">
+                            <p class="date">${itemDate}</p>
+                            <p class="title">${item.title}</p>
+                            <p class="description">${item.description}</p>
+                        </div>
+                    </div>`;
+                }).join('');
+                
+                renderPaginationControls(currentPage, totalPages);
+            }
+            
+            function renderPaginationControls(page, total) {
+                const container = document.getElementById('pagination-controls');
+                if (total <= 1) {
+                    container.innerHTML = '';
+                    return;
+                }
+                container.innerHTML = `
+                    <button id="prev-page" class="pagination-button" ${page === 1 ? 'disabled' : ''}>Anterior</button>
+                    <span class="page-info">Página ${page} de ${total}</span>
+                    <button id="next-page" class="pagination-button" ${page === total ? 'disabled' : ''}>Siguiente</button>
+                `;
+            }
+
+            function renderCartillaFilters() {
+                const container = document.getElementById('filter-container');
+                container.innerHTML = Object.entries(historyFilters).map(([key, val]) => `
+                    <button class="filter-button ${key === activeFilter ? 'active' : ''}" data-filter="${key}">
+                        ${val.label}
+                    </button>
+                `).join('');
+            }
+
+            function handlePetSelection(e) {
+                const listItem = e.target.closest('li');
+                if (listItem) {
+                    selectedPetId = parseInt(listItem.dataset.id, 10);
+                    closeAllSheets();
+                    updateDashboard();
+                    if (activeScreen === 'historial') renderTimeline();
+                }
+            }
+            
+            function handleAddPetSubmit(e) {
+                e.preventDefault();
+                const form = e.target;
+                const name = form.querySelector('#pet-name').value;
+                const species = form.querySelector('#pet-species').value;
+                const newPet = { id: Date.now(), name, species, icon: speciesToIcon[species] || 'ph-paw-print', nextAppointment: 'Ninguna', lastVisit: 'N/A', lastVaccine: 'N/A', weight: '--' };
+                appData.pets.push(newPet);
+                appData.medicalHistory[newPet.id] = [];
+                selectedPetId = newPet.id;
+                updateDashboard();
+                renderNotifications();
+                closeAllSheets();
+                form.reset();
+                showToast(`${name} añadido.`);
+            }
+
+            function handleAddHistorySubmit(e) {
+                e.preventDefault();
+                const form = e.target;
+                const newEntry = { id: Date.now(), date: new Date().toISOString(), type: form.querySelector('#history-type').value, title: form.querySelector('#history-title').value, description: form.querySelector('#history-description').value, professional: 'Usuario' };
+                appData.medicalHistory[selectedPetId].unshift(newEntry);
+                if (activeScreen === 'historial') renderTimeline();
+                closeAllSheets();
+                form.reset();
+                showToast('Entrada guardada.');
+            }
+
+            function handleAddByCodeSubmit(e) {
+                e.preventDefault();
+                const form = e.target;
+                const code = form.querySelector('#share-code').value.toUpperCase();
+                const sharedPet = appData.shareablePets[code];
+                if (sharedPet) {
+                    if (appData.pets.some(p => p.id === sharedPet.id)) {
+                        showToast(`${sharedPet.name} ya está en tu lista.`);
+                        return;
+                    }
+                    appData.pets.push(sharedPet);
+                    if (!appData.medicalHistory[sharedPet.id]) {
+                         appData.medicalHistory[sharedPet.id] = [];
+                    }
+                    selectedPetId = sharedPet.id;
+                    updateDashboard();
+                    renderNotifications();
+                    closeAllSheets();
+                    form.reset();
+                    showToast(`${sharedPet.name} añadido correctamente.`);
+                } else {
+                    showToast('Código no válido. Inténtalo de nuevo.');
+                }
+            }
+
+            function init() {
+                // Event Listeners
+                document.getElementById('back-to-resumen-button').addEventListener('click', () => navigateTo('resumen'));
+                document.getElementById('notifications-button').addEventListener('click', () => openSheet('notifications-sheet'));
+                document.getElementById('pet-select-button').addEventListener('click', () => { renderPetListInSheet(); openSheet('pet-select-sheet'); });
+                document.getElementById('add-pet-button').addEventListener('click', () => {
+                    const addPetSheet = document.getElementById('add-pet-sheet');
+                    addPetSheet.querySelector('#tab-create-pet').classList.add('active');
+                    addPetSheet.querySelector('#tab-add-by-code').classList.remove('active');
+                    addPetSheet.querySelector('#content-create-pet').classList.add('active');
+                    addPetSheet.querySelector('#content-add-by-code').classList.remove('active');
+                    openSheet('add-pet-sheet');
+                });
+                document.getElementById('add-history-quick-access').addEventListener('click', () => openSheet('add-history-sheet'));
+                
+                const addPetSheet = document.getElementById('add-pet-sheet');
+                addPetSheet.querySelector('#tab-create-pet').addEventListener('click', (e) => {
+                    e.target.classList.add('active');
+                    addPetSheet.querySelector('#tab-add-by-code').classList.remove('active');
+                    addPetSheet.querySelector('#content-create-pet').classList.add('active');
+                    addPetSheet.querySelector('#content-add-by-code').classList.remove('active');
+                });
+                addPetSheet.querySelector('#tab-add-by-code').addEventListener('click', (e) => {
+                    e.target.classList.add('active');
+                    addPetSheet.querySelector('#tab-create-pet').classList.remove('active');
+                    addPetSheet.querySelector('#content-add-by-code').classList.add('active');
+                    addPetSheet.querySelector('#content-create-pet').classList.remove('active');
+                });
+
+                document.getElementById('pet-list').addEventListener('click', handlePetSelection);
+                document.getElementById('add-pet-form').addEventListener('submit', handleAddPetSubmit);
+                document.getElementById('add-by-code-form').addEventListener('submit', handleAddByCodeSubmit);
+                document.getElementById('add-history-form').addEventListener('submit', handleAddHistorySubmit);
+                document.getElementById('sheet-overlay').addEventListener('click', closeAllSheets);
+                document.getElementById('quick-access-card').addEventListener('click', () => navigateTo('historial'));
+                
+                document.getElementById('filter-container').addEventListener('click', (e) => {
+                    const button = e.target.closest('.filter-button');
+                    if (button) {
+                        activeFilter = button.dataset.filter;
+                        currentPage = 1;
+                        renderCartillaFilters();
+                        renderTimeline();
+                    }
+                });
+                
+                document.getElementById('pagination-controls').addEventListener('click', (e) => {
+                    if (e.target.id === 'prev-page') {
+                        if (currentPage > 1) { currentPage--; renderTimeline(); }
+                    } else if (e.target.id === 'next-page') {
+                        const history = appData.medicalHistory[selectedPetId] || [];
+                        const totalPages = Math.ceil(history.length / itemsPerPage);
+                        if (currentPage < totalPages) { currentPage++; renderTimeline(); }
+                    }
+                });
+
+                const dateFilterPopup = document.getElementById('date-filter-popup');
+                document.getElementById('date-filter-toggle').addEventListener('click', (e) => {
+                    e.stopPropagation();
+                    dateFilterPopup.classList.toggle('visible');
+                });
+                document.getElementById('start-date').addEventListener('change', (e) => { dateFilter.start = e.target.value; currentPage = 1; renderTimeline(); });
+                document.getElementById('end-date').addEventListener('change', (e) => { dateFilter.end = e.target.value; currentPage = 1; renderTimeline(); });
+                document.getElementById('clear-date-filter').addEventListener('click', () => {
+                    document.getElementById('start-date').value = '';
+                    document.getElementById('end-date').value = '';
+                    dateFilter = { start: null, end: null };
+                    currentPage = 1;
+                    renderTimeline();
+                    dateFilterPopup.classList.remove('visible');
+                });
+                
+                document.body.addEventListener('click', (e) => {
+                    if (!dateFilterPopup.contains(e.target) && e.target.id !== 'date-filter-toggle' && !e.target.closest('#date-filter-toggle')) {
+                        dateFilterPopup.classList.remove('visible');
+                    }
+                });
+
+                // Renderizado inicial
+                updateDashboard();
+                renderCartillaFilters();
+                renderNotifications();
+            }
+
+            init();
+        });
+    </script>
+</body>
+</html>
